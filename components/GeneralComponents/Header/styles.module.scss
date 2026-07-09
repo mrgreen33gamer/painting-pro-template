@@ -195,3 +195,20 @@
 }
 
 /* end identity layer */
+
+/* === HEADER PATTERN UNIQUENESS — painting-pro-template === */
+.header,
+.shell,
+.bar,
+.navShell,
+.root {
+  // best-effort: classes vary; also target common wrappers
+}
+
+.header {
+  background-image: none !important;
+  border-bottom: 1px solid transparent !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+/* end header pattern */
