@@ -1,0 +1,410 @@
+// Brushcraft Painting Co. — Contact Page (unique build, not just a form import)
+// FIXED: Added useTrackEvent for:
+//   - phone_click  on the Phone & Text info card link
+//   - email_click  on the Email info card link
+//   - click        on the urgency toggle (so we can see how often it's used)
+//   - form_submit  after a successful form submission
+'use client';
+
+import { useState, useRef } from 'react';
+import styles from './page.module.scss';
+import { PulseLoader } from 'react-spinners';
+import ReCAPTCHA from 'react-google-recaptcha';
+import { motion, AnimatePresence } from 'framer-motion';
+import { getJourneyContext } from '&/useJourneyTracker';
+import { useTrackEvent } from '&/useTrackEvent';
+import FAQ from '#/PageComponents/FAQ/FAQ';
+import CTABanner from '#/PageComponents/CTABanner/CTABanner';
+
+// ── Service options ────────────────────────────────────────────────────────────
+const SERVICES = [
+  'Interior Painting', 'Exterior Painting', 'Cabinet Refinishing',
+  'Commercial Painting', 'Color Consultation', 'Drywall Repair & Prep',
+  'Other / Not Sure',
+];
+
+// ── FAQ data ──────────────────────────────────────────────────────────────────
+const faq = [
+  {
+    question: "What's the fastest way to get a free estimate?",
+    answer: "Call us directly at (830) 900-7400 or fill out the form below with a few photos of the space. We respond to most requests within one business day and can usually schedule an on-site estimate within the week.",
+  },
+  {
+    question: 'How far in advance should I book?',
+    answer: "For exterior painting during our busy spring and fall seasons, 2-3 weeks out is a safe bet. Interior projects and smaller jobs can often be scheduled sooner. We'll give you an honest timeline when you call — not a vague 'we'll get to it.'",
+  },
+  {
+    question: 'Do you charge for the estimate visit?',
+    answer: 'No — on-site estimates are always free, with no obligation to book. We\'ll walk the space with you, talk through color and finish options, and leave you with a firm written price.',
+  },
+  {
+    question: 'Do you handle commercial painting projects?',
+    answer: 'Yes — office buildings, retail spaces, restaurants, and multi-family properties are all within our scope. We can schedule around your business hours or tenant turnover to minimize disruption. Call to discuss your project.',
+  },
+  {
+    question: 'What areas do you serve?',
+    answer: 'New Braunfels (our home base), San Marcos, Seguin, Schertz, Cibolo, Boerne, Canyon Lake, and most of the surrounding Texas Hill Country. Call us — we probably cover your area.',
+  },
+  {
+    question: 'How do you handle older homes with lead paint concerns?',
+    answer: "We're an EPA Lead-Safe Certified Firm, which means our crews follow federally required containment and cleanup practices on any pre-1978 home. We'll flag it during the estimate and explain exactly what that process looks like — no shortcuts, no surprises.",
+  },
+];
+
+// ── Main component ────────────────────────────────────────────────────────────
+export default function ContactPage() {
+  const [formData, setFormData] = useState({
+    name: '', email: '', phone: '', service: '', address: '', message: '',
+  });
+  const [urgent, setUrgent]           = useState(false);
+  const [isSubmitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted]     = useState(false);
+  const [error, setError]             = useState('');
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
+  const trackEvent   = useTrackEvent();
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+    const token = recaptchaRef.current?.getValue();
+    if (!token) { setError('Please complete the reCAPTCHA.'); return; }
+    setSubmitting(true); setError('');
+    try {
+      const journeyContext = getJourneyContext();
+      const res = await fetch('/api/submitContact', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData, urgent, cityName: 'New Braunfels', slug: 'contact',
+          spot: 'contact-page', formVariant: 'contact-unique',
+          recaptchaToken: token, ...journeyContext,
+        }),
+      });
+      if (res.ok) {
+        setSubmitted(true);
+        recaptchaRef.current?.reset();
+        trackEvent({
+          eventType:    'form_submit',
+          elementLabel: 'Contact Page Form Submit',
+          section:      'contact-page',
+        });
+      } else throw new Error();
+    } catch { setError('Something went wrong. Please try again or call us directly.'); }
+    finally { setSubmitting(false); }
+  };
+
+  return (
+    <main className={styles.page}>
+
+      {/* ── Hero banner ──────────────────────────────────────────────────── */}
+      <section className={styles.hero}>
+        <div className={styles.heroBg} aria-hidden="true" />
+        <div className={styles.heroInner}>
+          <motion.div className={styles.heroBadge}
+            initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}>
+            <span className={styles.badgeDot} />
+            Free Estimates — New Braunfels &amp; the Texas Hill Country
+          </motion.div>
+          <motion.h1 className={styles.heroTitle}
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.08 }}>
+            Let&apos;s Talk About<br />
+            <span className={styles.heroAccent}>Your Next Paint Job</span>
+          </motion.h1>
+          <motion.p className={styles.heroSub}
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.18 }}>
+            Call, text, or fill out the form below for a free estimate. We respond fast — and we always answer the phone when it matters.
+          </motion.p>
+        </div>
+      </section>
+
+      {/* ── Contact info cards + form ─────────────────────────────────────── */}
+      <section className={styles.mainSection}>
+        <div className={styles.mainInner}>
+
+          {/* Left: info + trust */}
+          <div className={styles.leftCol}>
+
+            {/* Info cards */}
+            <div className={styles.infoCards}>
+              {[
+                {
+                  icon: (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.17 12a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 3.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                  ),
+                  label:     'Phone & Text',
+                  value:     '(830) 900-7400',
+                  href:      'tel:+18309007400',
+                  eventType: 'phone_click' as const,
+                  eventLabel: 'Contact Page Phone',
+                },
+                {
+                  icon: (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                      <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                  ),
+                  label:     'Email',
+                  value:     'hello@brushcraftpaintingtx.com',
+                  href:      'mailto:hello@brushcraftpaintingtx.com',
+                  eventType: 'email_click' as const,
+                  eventLabel: 'Contact Page Email',
+                },
+                {
+                  icon: (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                      <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                  ),
+                  label:     'Address',
+                  value:     '215 Gruene Rd, New Braunfels TX 78130',
+                  href:      'https://maps.google.com/?q=215+Gruene+Rd+New+Braunfels+TX+78130',
+                  eventType: 'click' as const,
+                  eventLabel: 'Contact Page Address',
+                },
+                {
+                  icon: (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                  ),
+                  label:     'Hours',
+                  value:     'Mon–Fri 7am–6pm · Sat 8am–2pm · Free estimates by appointment',
+                  href:      null,
+                  eventType: null,
+                  eventLabel: null,
+                },
+              ].map(({ icon, label, value, href, eventType: evtType, eventLabel }) => (
+                <motion.div key={label} className={styles.infoCard}
+                  initial={{ opacity: 0, x: -16 }} whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }} transition={{ duration: 0.45 }}>
+                  <div className={styles.infoIcon}>{icon}</div>
+                  <div className={styles.infoText}>
+                    <span className={styles.infoLabel}>{label}</span>
+                    {href ? (
+                      <a
+                        href={href}
+                        className={styles.infoValue}
+                        target={href.startsWith('http') ? '_blank' : undefined}
+                        rel="noopener noreferrer"
+                        onClick={() => evtType && eventLabel && trackEvent({
+                          eventType:    evtType,
+                          elementLabel: eventLabel,
+                          section:      'contact-page-info',
+                        })}
+                      >
+                        {value}
+                      </a>
+                    ) : (
+                      <span className={styles.infoValue}>{value}</span>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Trust callouts */}
+            <div className={styles.trustBlock}>
+              <p className={styles.trustHeading}>Why homeowners choose Brushcraft</p>
+              {[
+                'Upfront pricing — written estimate before we start',
+                '5-Year Workmanship Guarantee on every job',
+                'EPA Lead-Safe Certified, insured & bonded painters',
+                'Background-checked crews you can trust in your home',
+                'No contracts, no lock-in — ever',
+              ].map(t => (
+                <div key={t} className={styles.trustItem}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  {t}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: form */}
+          <div className={styles.rightCol}>
+            <AnimatePresence mode="wait">
+              {submitted ? (
+                <motion.div key="success" className={styles.successCard}
+                  initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4 }}>
+                  <div className={styles.successIconWrap}>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </div>
+                  <h2 className={styles.successTitle}>Request Received!</h2>
+                  <p className={styles.successText}>
+                    A member of the Brushcraft team will reach out shortly — usually within one business day. For anything time-sensitive, call us at{' '}
+                    <a href="tel:+18309007400">(830) 900-7400</a>.
+                  </p>
+                  <div className={styles.successMeta}>
+                    <span>✓ Free written estimate</span>
+                    <span>✓ No obligation</span>
+                    <span>✓ We come to you</span>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div key="form" className={styles.formCard}
+                  initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45 }}>
+
+                  <div className={styles.formCardHeader}>
+                    <div className={styles.formCardIcon} aria-hidden="true">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                        <line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/>
+                        <polyline points="8 6 12 2 16 6"/><polyline points="8 18 12 22 16 18"/>
+                        <polyline points="6 8 2 12 6 16"/><polyline points="18 8 22 12 18 16"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className={styles.formTitle}>Request a Free Estimate</h2>
+                      <p className={styles.formSubtitle}>We'll respond within one business day — usually much sooner.</p>
+                    </div>
+                  </div>
+
+                  {/* Urgency toggle */}
+                  <button
+                    type="button"
+                    className={`${styles.urgencyToggle} ${urgent ? styles.urgencyActive : ''}`}
+                    onClick={() => {
+                      const next = !urgent;
+                      setUrgent(next);
+                      trackEvent({
+                        eventType:    'click',
+                        elementLabel: next ? 'Time-Sensitive Toggle — On' : 'Time-Sensitive Toggle — Off',
+                        section:      'contact-page-form',
+                      });
+                    }}
+                  >
+                    <span className={styles.urgencyDot} />
+                    {urgent
+                      ? '🔴 Marked as time-sensitive — we\'ll prioritize your request'
+                      : 'Mark as time-sensitive (closing date, move-in, etc.)'}
+                  </button>
+
+                  <form className={styles.form} onSubmit={handleSubmit} noValidate>
+
+                    <div className={styles.row}>
+                      <div className={styles.field}>
+                        <label className={styles.label} htmlFor="c-name">Full Name *</label>
+                        <input id="c-name" className={styles.input} name="name" type="text"
+                          placeholder="Jane Smith" required value={formData.name} onChange={handleChange} />
+                      </div>
+                      <div className={styles.field}>
+                        <label className={styles.label} htmlFor="c-phone">Phone *</label>
+                        <input id="c-phone" className={styles.input} name="phone" type="tel"
+                          placeholder="(830) 555-0100" required value={formData.phone} onChange={handleChange} />
+                      </div>
+                    </div>
+
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="c-email">Email Address *</label>
+                      <input id="c-email" className={styles.input} name="email" type="email"
+                        placeholder="jane@example.com" required value={formData.email} onChange={handleChange} />
+                    </div>
+
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="c-service">Service Needed *</label>
+                      <select id="c-service" className={styles.input} name="service" required
+                        value={formData.service} onChange={handleChange}>
+                        <option value="">Select a service...</option>
+                        {SERVICES.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="c-address">
+                        Project Address <span className={styles.optional}>(optional)</span>
+                      </label>
+                      <input id="c-address" className={styles.input} name="address" type="text"
+                        placeholder="123 Main St, New Braunfels TX" value={formData.address} onChange={handleChange} />
+                    </div>
+
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="c-message">Tell Us About the Project *</label>
+                      <textarea id="c-message" className={`${styles.input} ${styles.textarea}`}
+                        name="message" required rows={4}
+                        placeholder="What rooms or areas need painting? Any colors in mind? Do you have a timeline?"
+                        value={formData.message} onChange={handleChange} />
+                    </div>
+
+                    <div className={styles.recaptchaWrap}>
+                      <ReCAPTCHA ref={recaptchaRef} sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!} size='normal' />
+                    </div>
+
+                    {error && (
+                      <div className={styles.errorMsg} role="alert">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                        {error}
+                      </div>
+                    )}
+
+                    <button type="submit" disabled={isSubmitting} className={styles.submitBtn}>
+                      {isSubmitting
+                        ? <PulseLoader size={8} color="#0d1b2a" />
+                        : (
+                          <>
+                            <span>Send Request</span>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                              <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                          </>
+                        )}
+                    </button>
+
+                    <p className={styles.formNote}>
+                      Or call/text us directly:{' '}
+                      <a
+                        href="tel:+18309007400"
+                        onClick={() => trackEvent({
+                          eventType:    'phone_click',
+                          elementLabel: 'Contact Page Form Note Phone',
+                          section:      'contact-page-form',
+                        })}
+                      >
+                        (830) 900-7400
+                      </a>{' '}
+                      — we answer 7 days a week.
+                    </p>
+                  </form>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ── FAQ ──────────────────────────────────────────────────────────── */}
+      <div className={styles.faqWrap}>
+        <FAQ cityName="New Braunfels" faq={faq} title="Common Questions Before You Call" />
+      </div>
+
+      {/* ── CTA Banner ───────────────────────────────────────────────────── */}
+      <CTABanner
+        headline="Ready to Get Your Free Estimate?"
+        subline="Call (830) 900-7400 — we answer 7 days a week, evenings included. Free estimates across New Braunfels and the Texas Hill Country."
+        primaryText="Call (830) 900-7400"
+        primaryLink="tel:+18309007400"
+        secondaryText="Send a Text"
+        secondaryLink="sms:+18309007400"
+      />
+
+    </main>
+  );
+}
