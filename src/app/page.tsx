@@ -45,36 +45,42 @@ export default function HomePage() {
       title: "Interior Painting",
       body: "Walls, ceilings, trim, and cabinetry painted with clean lines and a flawless finish. Furniture protected, dust contained, done on schedule.",
       link: "/services/interior-painting",
+      image: "/pages/home/services/service-1.jpg",
     },
     {
       icon: faHouseChimney,
       title: "Exterior Painting",
       body: "Pressure wash, scrape, caulk, prime, and two coats of premium exterior paint built to stand up to Central Texas heat and sun.",
       link: "/services/exterior-painting",
+      image: "/pages/home/services/service-2.jpg",
     },
     {
       icon: faSwatchbook,
       title: "Cabinet Refinishing",
       body: "Factory-smooth sprayed finishes on kitchen and bath cabinets. A fraction of the cost of replacement, with a like-new result.",
       link: "/services/cabinet-refinishing",
+      image: "/pages/home/services/service-3.jpg",
     },
     {
       icon: faBuilding,
       title: "Commercial Painting",
       body: "Offices, retail spaces, and multi-unit properties painted on flexible schedules — nights and weekends available to avoid business disruption.",
       link: "/services/commercial-painting",
+      image: "/pages/home/services/service-4.jpg",
     },
     {
       icon: faPalette,
       title: "Color Consultation",
       body: "In-home color guidance from a design-trained consultant. See real samples in your own lighting before committing to a palette.",
       link: "/services/color-consultation",
+      image: "/pages/home/services/service-1.jpg",
     },
     {
       icon: faHammer,
       title: "Drywall Repair & Prep",
       body: "Cracks, holes, and water stains patched, sanded, and primed so the repair disappears completely once painted.",
       link: "/services/drywall-repair-prep",
+      image: "/pages/home/services/service-2.jpg",
     },
   ];
 
@@ -211,16 +217,26 @@ export default function HomePage() {
 
   return (
     <main className={styles.pageWrapper}>
-
-      {/* 1. Hero */}
       <WelcomePage />
-
-      {/* 2. Scrolling trust strip — immediately after hero */}
       <TrustBar
         headline="New Braunfels' trusted painting company — EPA Lead-Safe Certified, insured, and guaranteed on every job"
       />
-
-      {/* 3. Impact metrics — build credibility before pitching services */}
+      <div className={styles.section}>
+        <ServiceCardComponent
+          heading="Complete Painting Services for Your Home or Business"
+          cards={services}
+        />
+      </div>
+      <CTABanner
+        headline="Paint That Looks Like a Renovation."
+        subline="Interior, exterior, and cabinet painting with serious prep — clean lines, durable coatings, tidy job sites."
+        primaryText="Call (830) 900-7400"
+        primaryLink="tel:+18309007400"
+        secondaryText="Color Consult"
+        secondaryLink="/contact"
+      
+        imageSrc="/pages/home/welcome/hero-main.jpg"
+       />
       <div className={styles.section}>
         <ImpactMetrics
           title="Numbers That Speak for Us"
@@ -228,16 +244,6 @@ export default function HomePage() {
           cityName="New Braunfels"
         />
       </div>
-
-      {/* 4. Services grid */}
-      <div className={styles.section}>
-        <ServiceCardComponent
-          heading="Complete Painting Services for Your Home or Business"
-          cards={services}
-        />
-      </div>
-
-      {/* 5. Why Choose Us */}
       <div className={styles.section}>
         <WhyChooseUs
           cityName="New Braunfels"
@@ -245,8 +251,39 @@ export default function HomePage() {
           title="What Makes Brushcraft Different"
         />
       </div>
-
-      {/* 14. Contact form — final conversion point */}
+      <div className={styles.section}>
+        <ProcessTimeline steps={processSteps} />
+      </div>
+      <div className={styles.section}>
+        <Testimonials testimonials={reviews} />
+      </div>
+      <div className={styles.section}>
+        <GuaranteeSection />
+      </div>
+      <div className={styles.section}>
+        <LocalServiceAreas
+          cityName="New Braunfels"
+          areas={localAreas}
+          servicePath=""
+          title="Serving the Texas Hill Country"
+        />
+      </div>
+      <div className={styles.section}>
+        <WhatToExpect
+          sectionTitle="Every Project, Every Time"
+          expectations={expectations}
+        />
+      </div>
+      <div className={styles.section}>
+        <FAQ
+          cityName="New Braunfels"
+          faq={faq}
+          title="Painting Questions — Answered Straight"
+        />
+      </div>
+      <div className={styles.section}>
+        <BlogPreviewGrid />
+      </div>
       <div className={styles.section}>
         <Variant4
           title="Request a Free Estimate"
@@ -256,65 +293,6 @@ export default function HomePage() {
           formVariant={2}
         />
       </div>
-
-      {/* 7. How it works — process after the CTA so urgency is set */}
-      <div className={styles.section}>
-        <ProcessTimeline steps={processSteps} />
-      </div>
-
-      {/* 8. Social proof — reviews before the guarantee promise */}
-      <div className={styles.section}>
-        <Testimonials testimonials={reviews} />
-      </div>
-
-      {/* 9. Guarantee — peer validation already done, now make the promise */}
-      <div className={styles.section}>
-        <GuaranteeSection />
-      </div>
-
-      {/* 6. Mid-page CTA — ready-to-book hook before process details */}
-      <CTABanner
-        headline="Ready to Transform Your Space? Call Us Today."
-        subline="Free estimates across New Braunfels, San Marcos, Seguin, Schertz, and all of the Texas Hill Country. Upfront pricing. 5-Year Workmanship Guarantee."
-        primaryText="Call (830) 900-7400"
-        primaryLink="tel:+18309007400"
-        secondaryText="Book Online"
-        secondaryLink="/contact"
-      />
-
-
-      {/* 10. Service areas */}
-      <div className={styles.section}>
-        <LocalServiceAreas
-          cityName="New Braunfels"
-          areas={localAreas}
-          servicePath=""
-          title="Serving the Texas Hill Country"
-        />
-      </div>
-
-      {/* 11. What to expect (detail reassurance — lower in page) */}
-      <div className={styles.section}>
-        <WhatToExpect
-          sectionTitle="Every Project, Every Time"
-          expectations={expectations}
-        />
-      </div>
-
-      {/* 12. FAQ */}
-      <div className={styles.section}>
-        <FAQ
-          cityName="New Braunfels"
-          faq={faq}
-          title="Painting Questions — Answered Straight"
-        />
-      </div>
-
-      {/* 13. Blog preview — educational content before the final form */}
-      <div className={styles.section}>
-        <BlogPreviewGrid />
-      </div>
-
     </main>
   );
 }
