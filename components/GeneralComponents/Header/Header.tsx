@@ -35,7 +35,7 @@ const marqueeItems = [
   'Serving the Texas Hill Country Since 2014',
   'Licensed & Insured · New Braunfels, TX',
 ];
-const footerLine = 'Licensed &amp; Insured · New Braunfels, TX';
+const footerLine = 'Licensed & Insured · New Braunfels, TX';
 const secondaryCtaLabel = 'Book Now';
 const secondaryCtaHref = '/contact';
 const hoursText = 'Mon–Sat · 7am–7pm';
