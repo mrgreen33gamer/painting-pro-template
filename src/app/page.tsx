@@ -73,14 +73,14 @@ export default function HomePage() {
       title: "Color Consultation",
       body: "In-home color guidance from a design-trained consultant. See real samples in your own lighting before committing to a palette.",
       link: "/services/color-consultation",
-      image: "/pages/home/services/service-1.jpg",
+      image: "/pages/home/welcome/before.jpg",
     },
     {
       icon: faHammer,
       title: "Drywall Repair & Prep",
       body: "Cracks, holes, and water stains patched, sanded, and primed so the repair disappears completely once painted.",
       link: "/services/drywall-repair-prep",
-      image: "/pages/home/services/service-2.jpg",
+      image: "/pages/home/welcome/after.jpg",
     },
   ];
 
