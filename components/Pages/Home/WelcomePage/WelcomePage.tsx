@@ -1,215 +1,61 @@
-// _archetype-library/hero-b-before-after/Component.tsx
-//
-// Hero B: Before / After — left copy, right full drag-to-reveal image comparison.
-// Interactive range slider + pointer drag. Accessible via role="slider" + range input.
+// Painting Pro Hero — photographic parallax stage
+// A scroll-linked painting scene sits behind a purple/indigo brand scrim, with an
+// authentic painter photo framed as a spec card on the right (replaces the former
+// before/after drag slider). Photos live in /public/pages/home/welcome.
 'use client';
-import React, { useCallback, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useRef } from 'react';
+import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion';
+import Image from 'next/image';
 import Link from 'next/link';
 import { PhoneIcon, ChevronIcon, CheckIcon } from './_shared/icons';
 import styles from './styles.module.scss';
 
-function BeforeAfterSlider({
-  beforeImageSrc,
-  afterImageSrc,
-  beforeLabel = 'Before',
-  afterLabel = 'After',
-}: {
-  beforeImageSrc: string;
-  afterImageSrc: string;
-  beforeLabel?: string;
-  afterLabel?: string;
-}) {
-  const [position, setPosition] = useState(50);
-  const frameRef = useRef<HTMLDivElement>(null);
-  const dragging = useRef(false);
+export default function WelcomePage() {
+  const reduceMotion = useReducedMotion();
+  const heroRef = useRef<HTMLElement>(null);
 
-  const setFromClientX = useCallback((clientX: number) => {
-    const el = frameRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    if (rect.width <= 0) return;
-    const pct = ((clientX - rect.left) / rect.width) * 100;
-    setPosition(Math.min(100, Math.max(0, pct)));
-  }, []);
+  // Scroll-linked parallax on the background photo. Disabled under reduced-motion.
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ['start start', 'end start'],
+  });
+  const bgY = useTransform(scrollYProgress, [0, 1], ['0%', reduceMotion ? '0%' : '16%']);
+  const bgScale = useTransform(scrollYProgress, [0, 1], [1.08, reduceMotion ? 1.08 : 1.16]);
 
-  const onPointerDown = (e: React.PointerEvent) => {
-    dragging.current = true;
-    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
-    setFromClientX(e.clientX);
-  };
-
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!dragging.current) return;
-    setFromClientX(e.clientX);
-  };
-
-  const onPointerUp = () => {
-    dragging.current = false;
-  };
-
-  const onRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPosition(Number(e.target.value));
-  };
-
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    const step = e.shiftKey ? 10 : 2;
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
-      e.preventDefault();
-      setPosition((p) => Math.max(0, p - step));
-    } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      setPosition((p) => Math.min(100, p + step));
-    } else if (e.key === 'Home') {
-      e.preventDefault();
-      setPosition(0);
-    } else if (e.key === 'End') {
-      e.preventDefault();
-      setPosition(100);
-    }
-  };
+  const badgeText = 'New Braunfels\' Most Trusted Painters — Since 2014';
+  const headlineLines = ['Fresh Coat.', 'Flawless Finish.'];
+  const headlineAccent = 'Brushcraft.';
+  const subheadline =
+    'Upfront pricing. Free estimates. 5-Year Workmanship Guarantee on every job. Serving New Braunfels and the Texas Hill Country with EPA Lead-Safe Certified painters.';
+  const primaryCta = { label: 'Call (830) 900-7400', href: 'tel:+18309007400' };
+  const secondaryCta = { label: 'Free Estimate', href: '/contact' };
+  const chips = [
+    'Free Estimates',
+    'No Contracts',
+    'EPA Lead-Safe Certified',
+    '12+ Yrs Local',
+    '5-Yr Guarantee',
+  ];
 
   return (
-    <div className={styles.baFrame} ref={frameRef}>
-      <img
-        src={afterImageSrc}
-        alt={afterLabel}
-        className={styles.baImage}
-        draggable={false}
-      />
-      <div
-        className={styles.baBeforeClip}
-        style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
-      >
-        <img
-          src={beforeImageSrc}
-          alt={beforeLabel}
-          className={styles.baImage}
-          draggable={false}
-        />
-      </div>
-
-      <span className={`${styles.baLabel} ${styles.baLabelBefore}`}>{beforeLabel}</span>
-      <span className={`${styles.baLabel} ${styles.baLabelAfter}`}>{afterLabel}</span>
-
-      <div
-        className={styles.baDivider}
-        style={{ left: `${position}%` }}
+    <section ref={heroRef} className={styles.hero} aria-label="Hero">
+      {/* Photographic parallax background — an interior wall being painted */}
+      <motion.div
+        className={styles.bgLayer}
+        style={{ y: bgY, scale: bgScale }}
         aria-hidden="true"
       >
-        <div className={styles.baHandle}>
-          <span className={styles.baHandleArrow} data-dir="left" />
-          <span className={styles.baHandleArrow} data-dir="right" />
-        </div>
-      </div>
-
-      {/* Accessible control — full-area range for pointer + keyboard */}
-      <input
-        type="range"
-        className={styles.baRange}
-        min={0}
-        max={100}
-        step={0.5}
-        value={position}
-        onChange={onRangeChange}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-        onKeyDown={onKeyDown}
-        aria-label="Before and after reveal"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round(position)}
-        aria-valuetext={`${Math.round(position)} percent before image`}
-        role="slider"
-      />
-    </div>
-  );
-}
-
-export default function WelcomePage() {
-const badgeText = 'New Braunfels\' Most Trusted Painters — Since 2014';
-const headlineLines = [
-  'Fresh Coat.',
-  'Flawless Finish.',
-];
-const headlineAccent = 'Brushcraft.';
-const subheadline = 'Upfront pricing. Free estimates. 5-Year Workmanship Guarantee on every job. Serving New Braunfels and the Texas Hill Country with EPA Lead-Safe Certified painters.';
-const primaryCta = { label: 'Call (830) 900-7400', href: 'tel:+18309007400' };
-const secondaryCta = { label: 'Free Estimate', href: '/contact' };
-const chips = [
-  'Free Estimates',
-  'No Contracts',
-  'EPA Lead-Safe Certified',
-  '12+ Yrs Local',
-  '5-Yr Guarantee',
-];
-const stats = [
-  {
-    "value": "1,800+",
-    "label": "Homes Painted"
-  },
-  {
-    "value": "4.9 ★",
-    "label": "Google Rating"
-  },
-  {
-    "value": "5-Year",
-    "label": "Guarantee Included"
-  },
-  {
-    "value": "Free",
-    "label": "Estimates Available"
-  }
-];
-const meterTarget = 72;
-const meterTopLabel = "After";
-const meterMidLabel = "During";
-const meterBotLabel = "Before";
-const particleColor = '#a855f7';
-const beforeImageSrc = '/pages/home/welcome/before.jpg';
-const afterImageSrc = '/pages/home/welcome/after.jpg';
-const beforeLabel = "Tired walls";
-const afterLabel = "Fresh finish";
-const mapCenterLabel = 'Service HQ';
-const mapPins = [
-  { label: 'Waco', x: 42, y: 48 },
-  { label: 'Temple', x: 68, y: 62 },
-  { label: 'Killeen', x: 58, y: 72 },
-];
-const coverageLabel = 'Central Texas coverage';
-const materials = [
-  { name: "Interior", swatch: "#f97316", imageSrc: "/pages/home/welcome/mat-1.jpg" },
-  { name: "Exterior", swatch: "#fb923c", imageSrc: "/pages/home/welcome/mat-2.jpg" },
-  { name: "Cabinets", swatch: "#ea580c", imageSrc: "/pages/home/welcome/mat-3.jpg" },
-  { name: "Trim", swatch: "#fdba74", imageSrc: "/pages/home/welcome/mat-1.jpg" },
-  { name: "Stain", swatch: "#c2410c", imageSrc: "/pages/home/welcome/mat-2.jpg" },
-  { name: "Commercial", swatch: "#9a3412", imageSrc: "/pages/home/welcome/mat-3.jpg" }
-];
-const quote = "Cabinet spray transformed the kitchen. Edges are crisp and they left zero paint dust.";
-const authorName = "Lauren V.";
-const authorMeta = "Cabinet paint · Georgetown";
-const rating = 5;
-const schematicLabel = "Brushcraft schematic";
-const gauges = [
-  { label: "Rooms", value: "6,500+" },
-  { label: "Rating", value: "4.9 ★" },
-  { label: "Prep", value: "Non-negotiable" },
-  { label: "Warranty", value: "Workmanship" }
-];
-const toggles = [
-  { label: "Before/after", on: true },
-  { label: "Weekend slots", on: true },
-  { label: "Photo proofs", on: true }
-];
-const textureSrc = '/pages/home/welcome/hero-main.jpg';
-const textureAlt = 'Texture';
-const accentWord = "Brushcraft";
-
-  return (
-    <section className={styles.hero} aria-label="Hero">
-      <div className={styles.shard} aria-hidden="true" />
+        <Image
+          src="/pages/home/welcome/hero-main.jpg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className={styles.bgImage}
+        />
+      </motion.div>
+      {/* Indigo/violet brand scrim keeps the headline legible and on-brand */}
+      <div className={styles.scrim} aria-hidden="true" />
 
       <div className={styles.layout}>
         <div className={styles.content}>
@@ -272,18 +118,38 @@ const accentWord = "Brushcraft";
           </motion.div>
         </div>
 
+        {/* Authentic painter photo — the ownable image, framed as a spec card */}
         <motion.div
           className={styles.visual}
-          initial={{ opacity: 0, x: 30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.7, delay: 0.28, ease: 'easeOut' }}
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.15 }}
         >
-          <BeforeAfterSlider
-            beforeImageSrc={beforeImageSrc}
-            afterImageSrc={afterImageSrc}
-            beforeLabel={beforeLabel}
-            afterLabel={afterLabel}
-          />
+          <div className={styles.photoCard}>
+            <Image
+              src="/pages/home/welcome/hero-painter.jpg"
+              alt="A professional painter applying a fresh coat of paint to an interior wall with a roller"
+              fill
+              priority
+              sizes="(max-width: 960px) 88vw, 460px"
+              className={styles.photo}
+            />
+            <div className={styles.photoGlaze} aria-hidden="true" />
+
+            <div className={styles.photoBadge}>
+              <span className={styles.photoBadgeDot} />
+              EPA Lead-Safe Crew · On-Site
+            </div>
+
+            <div className={styles.specCard}>
+              <span className={styles.specRow}>
+                <CheckIcon size={10} /> EPA Lead-Safe Certified
+              </span>
+              <span className={styles.specRow}>
+                <CheckIcon size={10} /> 5-Year Workmanship Guarantee
+              </span>
+            </div>
+          </div>
         </motion.div>
       </div>
     </section>
